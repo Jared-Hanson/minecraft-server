@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Minecraft Server Dashboard</title>
+<title>Fab Four Minecraft Server Dashboard</title>
 <style>
   body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
   button { margin: 5px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
@@ -22,7 +22,7 @@
 <input type="text" id="ipbox" readonly placeholder="IP will appear here">
 
 <script>
-const LAMBDA_URL = 'https://sbt3ji4mrsyg4nixn7tqfnphoq0ztkri.lambda-url.us-west-2.on.aws/'; // <-- Replace with your Lambda Function URL
+const LAMBDA_URL = 'https://sbt3ji4mrsyg4nixn7tqfnphoq0ztkri.lambda-url.us-west-2.on.aws/';
 
 let isBusy = false;
 
@@ -30,26 +30,31 @@ async function sendAction(action) {
     if (isBusy) return;
     isBusy = true;
 
-    // Disable buttons while working
     setButtonsDisabled(true);
     document.getElementById('status').textContent = 'Processing...';
 
     try {
         const response = await fetch(LAMBDA_URL, {
             method: 'POST',
+            mode: 'cors',                 // important for cross-origin
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action })
         });
 
+        // Handle non-200 responses
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
-        document.getElementById('status').textContent = data.text;
+        document.getElementById('status').textContent = data.text || '';
 
         // Extract IP if present
         const ipMatch = data.text.match(/(\d+\.\d+\.\d+\.\d+)/);
         document.getElementById('ipbox').value = ipMatch ? ipMatch[0] : '';
 
     } catch (err) {
-        document.getElementById('status').textContent = 'Error: ' + err;
+        document.getElementById('status').textContent = 'Error: ' + err.message;
         document.getElementById('ipbox').value = '';
     }
 

@@ -5,17 +5,18 @@
 <title>Fab Four Minecraft Server Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  /* General body */
+  /* Body and general layout */
   body {
-    font-family: 'Press Start 2P', cursive;
+    font-family: Arial, sans-serif; /* clean font for main text */
     background: linear-gradient(to bottom, #1a1a1a, #111);
-    color: #00ff00;
+    color: #00ff66;
     text-align: center;
     margin: 0;
     padding: 50px 20px;
   }
 
   h1 {
+    font-family: 'Press Start 2P', cursive;
     font-size: 28px;
     margin-bottom: 40px;
     color: #00ff66;
@@ -23,7 +24,8 @@
   }
 
   /* Buttons */
-  button {
+  button.action-btn {
+    font-family: 'Press Start 2P', cursive;
     background-color: #222;
     color: #00ff66;
     border: 2px solid #00ff66;
@@ -35,13 +37,13 @@
     transition: all 0.2s ease-in-out;
   }
 
-  button:hover:not(:disabled) {
+  button.action-btn:hover:not(:disabled) {
     background-color: #00ff66;
     color: #111;
     transform: scale(1.05);
   }
 
-  button:disabled {
+  button.action-btn:disabled {
     background-color: #444;
     border-color: #555;
     color: #888;
@@ -51,6 +53,7 @@
   /* Status panel */
   #status {
     margin-top: 30px;
+    font-family: Arial, sans-serif; /* clean font for readability */
     font-size: 14px;
     background-color: #111;
     border: 2px solid #00ff66;
@@ -62,36 +65,63 @@
     margin-right: auto;
     min-height: 60px;
     white-space: pre-wrap;
+    box-shadow: 0 0 10px #00ff6655;
   }
 
-  /* IP box */
-  #ipbox {
-    font-family: monospace;
-    font-size: 14px;
-    width: 220px;
-    text-align: center;
+  /* IP box container */
+  .ip-container {
     margin-top: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #ipbox {
+    font-family: Arial, sans-serif; /* clean font for IP */
+    font-size: 14px;
+    width: 180px;
+    text-align: center;
     padding: 8px;
     border: 2px solid #00ff66;
     border-radius: 6px;
     background-color: #111;
     color: #00ff66;
   }
+
+  button.copy-btn {
+    font-family: 'Press Start 2P', cursive;
+    background-color: #222;
+    color: #00ff66;
+    border: 2px solid #00ff66;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+
+  button.copy-btn:hover {
+    background-color: #00ff66;
+    color: #111;
+    transform: scale(1.1);
+  }
 </style>
 </head>
 <body>
 <h1>Fab Four Minecraft Server Dashboard</h1>
 
-<button id="startBtn" onclick="sendAction('start')">Start Server</button>
-<button id="stopBtn" onclick="sendAction('stop')">Stop Server</button>
-<button id="ipBtn" onclick="sendAction('ip')">Get IP</button>
+<button class="action-btn" id="startBtn" onclick="sendAction('start')">Start Server</button>
+<button class="action-btn" id="stopBtn" onclick="sendAction('stop')">Stop Server</button>
+<button class="action-btn" id="ipBtn" onclick="sendAction('ip')">Get IP</button>
 
 <div id="status">Status will appear here...</div>
-<input type="text" id="ipbox" readonly placeholder="IP will appear here">
+
+<div class="ip-container">
+  <input type="text" id="ipbox" readonly placeholder="IP will appear here">
+  <button class="copy-btn" onclick="copyIP()">COPY</button>
+</div>
 
 <script>
 const LAMBDA_URL = 'https://sbt3ji4mrsyg4nixn7tqfnphoq0ztkri.lambda-url.us-west-2.on.aws/';
-
 let isBusy = false;
 
 async function sendAction(action) {
@@ -130,6 +160,14 @@ function setButtonsDisabled(disabled) {
     document.getElementById('startBtn').disabled = disabled;
     document.getElementById('stopBtn').disabled = disabled;
     document.getElementById('ipBtn').disabled = disabled;
+}
+
+function copyIP() {
+    const ipInput = document.getElementById('ipbox');
+    ipInput.select();
+    ipInput.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    alert('IP copied to clipboard: ' + ipInput.value);
 }
 </script>
 </body>

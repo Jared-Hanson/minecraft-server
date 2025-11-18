@@ -90,7 +90,8 @@
   </div>
 
   <script>
-    const endpoint = "https://dflnanwdm6.execute-api.us-west-2.amazonaws.com/Prod";
+    const endpoint = "https://sbt3ji4mrsyg4nixn7tqfnphoq0ztkri.lambda-url.us-west-2.on.aws/";
+    const sharedSecret = "hanson114872";
 
     function sendAction(action) {
       showOutput("Working...", false);
@@ -98,7 +99,7 @@
       fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action })
+        body: JSON.stringify({ action, secret: sharedSecret })
       })
       .then(res => res.json())
       .then(data => {
@@ -116,13 +117,13 @@
       output.innerText = text;
       if (animate) {
         output.classList.remove("fade-in");
-        void output.offsetWidth; // reset animation
+        void output.offsetWidth;
         output.classList.add("fade-in");
       }
     }
 
     function maybeShowCopyButton(response) {
-      const match = response.match(/(\d{1,3}\.){3}\d{1,3}/); // IP regex
+      const match = response.match(/(\d{1,3}\.){3}\d{1,3}/);
       const copyBtn = document.getElementById("copyBtn");
 
       if (match) {
@@ -142,4 +143,3 @@
 
 </body>
 </html>
-``

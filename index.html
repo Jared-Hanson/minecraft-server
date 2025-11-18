@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minecraft Server Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      background: #1d1f21;
+      color: #d7d7d7;
+      font-family: "Segoe UI", sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      margin-bottom: 25px;
+      font-size: 32px;
+      color: #9cdcfe;
+      text-shadow: 0 0 5px #00aaff;
+    }
+
+    .panel {
+      background: #2b2b2b;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      max-width: 500px;
+      margin: auto;
+    }
+
+    button {
+      background: #3c8527;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      margin: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover { background: #48a732; }
+    button:active { transform: scale(0.97); }
+
+    .stop-btn { background: #a82a2a !important; }
+    .stop-btn:hover { background: #d53636 !important; }
+
+    #output {
+      background: #111;
+      color: #9cdcfe;
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 18px;
+      min-height: 50px;
+      white-space: pre-wrap;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
+      display: none;
+    }
+
+    #copyBtn {
+      display: none;
+      margin-top: 10px;
+      background: #0078d4;
+    }
+    #copyBtn:hover { background: #1a8cff; }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Minecraft Server Control</h1>
+
+  <div class="panel">
+    <button onclick="sendAction('start')">Start Server</button>
+    <button onclick="sendAction('stop')" class="stop-btn">Stop Server</button>
+    <button onclick="sendAction('ip')">Get IP</button>
+
+    <div id="output"></div>
+    <button id="copyBtn" onclick="copyIP()">Copy IP</button>
+  </div>
+
+  <script>
+    const endpoint = "https://dflnanwdm6.execute-api.us-west-2.amazonaws.com/Prod";
+
+    function sendAction(action) {
+      showOutput("Working...", false);
+
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action })
+      })
+      .then(res => res.json())
+      .then(data => {
+        showOutput(data.text, true);
+        maybeShowCopyButton(data.text);
+      })
+      .catch(err => {
+        showOutput("Error: " + err, true);
+      });
+    }
+
+    function showOutput(text, animate) {
+      const output = document.getElementById("output");
+      output.style.display = "block";
+      output.innerText = text;
+      if (animate) {
+        output.classList.remove("fade-in");
+        void output.offsetWidth; // reset animation
+        output.classList.add("fade-in");
+      }
+    }
+
+    function maybeShowCopyButton(response) {
+      const match = response.match(/(\d{1,3}\.){3}\d{1,3}/); // IP regex
+      const copyBtn = document.getElementById("copyBtn");
+
+      if (match) {
+        window.lastIP = match[0];
+        copyBtn.style.display = "inline-block";
+      } else {
+        copyBtn.style.display = "none";
+      }
+    }
+
+    function copyIP() {
+      if (!window.lastIP) return;
+      navigator.clipboard.writeText(window.lastIP);
+      showOutput("Copied IP: " + window.lastIP, true);
+    }
+  </script>
+
+</body>
+</html>
+``

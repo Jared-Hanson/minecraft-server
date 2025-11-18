@@ -1,145 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Minecraft Server Control</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <style>
-    body {
-      background: #1d1f21;
-      color: #d7d7d7;
-      font-family: "Segoe UI", sans-serif;
-      text-align: center;
-      padding: 40px;
-    }
-
-    h1 {
-      margin-bottom: 25px;
-      font-size: 32px;
-      color: #9cdcfe;
-      text-shadow: 0 0 5px #00aaff;
-    }
-
-    .panel {
-      background: #2b2b2b;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      max-width: 500px;
-      margin: auto;
-    }
-
-    button {
-      background: #3c8527;
-      color: white;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 8px;
-      margin: 8px;
-      font-size: 18px;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-    }
-    button:hover { background: #48a732; }
-    button:active { transform: scale(0.97); }
-
-    .stop-btn { background: #a82a2a !important; }
-    .stop-btn:hover { background: #d53636 !important; }
-
-    #output {
-      background: #111;
-      color: #9cdcfe;
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 8px;
-      font-size: 18px;
-      min-height: 50px;
-      white-space: pre-wrap;
-      box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
-      display: none;
-    }
-
-    #copyBtn {
-      display: none;
-      margin-top: 10px;
-      background: #0078d4;
-    }
-    #copyBtn:hover { background: #1a8cff; }
-
-    .fade-in {
-      animation: fadeIn 0.3s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Minecraft Server Dashboard</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+  button { margin: 5px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  button:disabled { background-color: #ccc; cursor: not-allowed; }
+  #status { margin-top: 20px; font-size: 18px; white-space: pre-wrap; }
+  #ipbox { font-size: 16px; width: 200px; text-align: center; margin-top: 10px; }
+</style>
 </head>
 <body>
+<h1>Minecraft Server Dashboard</h1>
 
-  <h1>Minecraft Server Control</h1>
+<button id="startBtn" onclick="sendAction('start')">Start Server</button>
+<button id="stopBtn" onclick="sendAction('stop')">Stop Server</button>
+<button id="ipBtn" onclick="sendAction('ip')">Get IP</button>
 
-  <div class="panel">
-    <button onclick="sendAction('start')">Start Server</button>
-    <button onclick="sendAction('stop')" class="stop-btn">Stop Server</button>
-    <button onclick="sendAction('ip')">Get IP</button>
+<div id="status"></div>
+<input type="text" id="ipbox" readonly placeholder="IP will appear here">
 
-    <div id="output"></div>
-    <button id="copyBtn" onclick="copyIP()">Copy IP</button>
-  </div>
+<script>
+const LAMBDA_URL = 'https://sbt3ji4mrsyg4nixn7tqfnphoq0ztkri.lambda-url.us-west-2.on.aws/'; // <-- Replace with your Lambda Function URL
 
-  <script>
-    const endpoint = "https://sbt3ji4mrsyg4nixn7tqfnphoq0ztkri.lambda-url.us-west-2.on.aws/";
-    const sharedSecret = "hanson114872";
+let isBusy = false;
 
-    function sendAction(action) {
-      showOutput("Working...", false);
+async function sendAction(action) {
+    if (isBusy) return;
+    isBusy = true;
 
-      fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, secret: sharedSecret })
-      })
-      .then(res => res.json())
-      .then(data => {
-        showOutput(data.text, true);
-        maybeShowCopyButton(data.text);
-      })
-      .catch(err => {
-        showOutput("Error: " + err, true);
-      });
+    // Disable buttons while working
+    setButtonsDisabled(true);
+    document.getElementById('status').textContent = 'Processing...';
+
+    try {
+        const response = await fetch(LAMBDA_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action })
+        });
+
+        const data = await response.json();
+        document.getElementById('status').textContent = data.text;
+
+        // Extract IP if present
+        const ipMatch = data.text.match(/(\d+\.\d+\.\d+\.\d+)/);
+        document.getElementById('ipbox').value = ipMatch ? ipMatch[0] : '';
+
+    } catch (err) {
+        document.getElementById('status').textContent = 'Error: ' + err;
+        document.getElementById('ipbox').value = '';
     }
 
-    function showOutput(text, animate) {
-      const output = document.getElementById("output");
-      output.style.display = "block";
-      output.innerText = text;
-      if (animate) {
-        output.classList.remove("fade-in");
-        void output.offsetWidth;
-        output.classList.add("fade-in");
-      }
-    }
+    setButtonsDisabled(false);
+    isBusy = false;
+}
 
-    function maybeShowCopyButton(response) {
-      const match = response.match(/(\d{1,3}\.){3}\d{1,3}/);
-      const copyBtn = document.getElementById("copyBtn");
-
-      if (match) {
-        window.lastIP = match[0];
-        copyBtn.style.display = "inline-block";
-      } else {
-        copyBtn.style.display = "none";
-      }
-    }
-
-    function copyIP() {
-      if (!window.lastIP) return;
-      navigator.clipboard.writeText(window.lastIP);
-      showOutput("Copied IP: " + window.lastIP, true);
-    }
-  </script>
-
+function setButtonsDisabled(disabled) {
+    document.getElementById('startBtn').disabled = disabled;
+    document.getElementById('stopBtn').disabled = disabled;
+    document.getElementById('ipBtn').disabled = disabled;
+}
+</script>
 </body>
 </html>
